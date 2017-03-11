@@ -21,11 +21,9 @@
 #define REG_FILE      1
 #define DIRECTORY     2
 
-void getHomeDir(char *homeDir, char **environment);
-
 int typeOfFile(char *fullPathToFile);
 
-void sendDataBin(char *fileToSend, int sock, char *home, char *webDir);
+void sendDataBin(char *fileToSend, int sock, char *webDir);
 
 void extractFileRequest(char *req, char *buff);
 
@@ -36,16 +34,14 @@ void extractFileRequest(char *req, char *buff);
  +  Description: Program entry point.
  + 
  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-int main(int argc, char **argv, char **environment) {
+int main(int argc, char **argv) {
     pid_t pid;            /* pid of child */
     int sockFD;           /* our initial socket */
 
     int newSockFD;
     int port;             /* Port number, used by 'bind' */
-    char webDir[128];    /* Your environment that contains your web webDir
-                           such as .www in your home environment */
-    char homeDir[128];    /* Your home environment */
-    /* (gets filled in by getHomeDir() */
+    char webDir[128];    /* Your environment that contains your web webDir*/
+
     socklen_t clientAddressLength;
 
 
@@ -61,14 +57,9 @@ int main(int argc, char **argv, char **environment) {
      * Check for correct program inputs.
      */
     if (argc != 3) {
-        fprintf(stderr, "USAGE: %s <port number> <website home directory>\n", argv[0]);
+        fprintf(stderr, "USAGE: %s <port number> <website directory>\n", argv[0]);
         exit(-1);
     }
-
-    /*
-     * Get home direction path from the environment
-     */
-    getHomeDir(homeDir, environment);
 
     port = atoi(argv[1]);       /* Get the port number */
     strcpy(webDir, argv[2]);    /* Get user specified web content directory */
@@ -201,7 +192,7 @@ int main(int argc, char **argv, char **environment) {
             fflush(stdout);
 
             /* Read file and send it to client */
-            sendDataBin(fileRequest, newSockFD, homeDir, webDir);
+            sendDataBin(fileRequest, newSockFD, webDir);
             shutdown(newSockFD, 1);
             close(newSockFD);
             exit(0);
@@ -214,27 +205,6 @@ int main(int argc, char **argv, char **environment) {
 			                        doesn't care about this socket */
         }
     }
-}
-
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- +
- +  Function: getHomeDir()
- +  Description: Go through environment settings and 
- +               extract home directory path.
- + 
- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-void getHomeDir(char *homeDir, char **environment) {
-    int i = 0;
-    while (environment[i] != NULL) {
-        if (!strncmp(environment[i], "HOME=", 5)) {
-            strcpy(homeDir, &environment[i][5]);
-            return;
-        }
-        i++;
-    }
-    fprintf(stderr, "Could not find HOME\n");
-    fflush(stderr);
-    exit(-1);
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -288,7 +258,7 @@ void extractFileRequest(char *req, char *buff) {
  +  Description: Send the requested file.
  + 
  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-void sendDataBin(char *fileToSend, int sock, char *home, char *webDir) {
+void sendDataBin(char *fileToSend, int sock, char *webDir) {
     int fileHandle;
     char fullPathToFile[256];
     char Header[1024];
@@ -302,7 +272,7 @@ void sendDataBin(char *fileToSend, int sock, char *home, char *webDir) {
     /*
      * Build the full path to the file
      */
-    sprintf(fullPathToFile, "%s/%s/%s", home, webDir, fileToSend);
+    sprintf(fullPathToFile, "%s/%s", webDir, fileToSend);
 
     /*
      * - If the requested file is a environment (directory), append 'index.html'
