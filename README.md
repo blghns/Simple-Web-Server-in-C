@@ -2,7 +2,7 @@
 Simple http server written in c
 
 ## Compile
-    gcc -o webserver webServer.c
+    scons
 
 ## Usage
     webserver <port> <dir>
